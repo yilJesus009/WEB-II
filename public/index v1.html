@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IssueTrack</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f0f0f; --bg2: #161616; --bg3: #1e1e1e; --border: #2a2a2a;
+  --accent: #3b82f6; --accent2: #1d4ed8; --text: #e5e5e5; --text2: #888; --text3: #555;
+  --pending: #f59e0b; --progress: #3b82f6; --done: #22c55e;
+  --alta: #ef4444; --media: #f59e0b; --baja: #22c55e; --radius: 6px;
+  --font: 'IBM Plex Sans', sans-serif; --mono: 'IBM Plex Mono', monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: var(--font); font-size: 14px; min-height: 100vh; }
+
+.auth-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+.auth-card { width: 360px; background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 32px; }
+.auth-logo { font-family: var(--mono); font-size: 18px; font-weight: 500; color: var(--accent); margin-bottom: 24px; display: flex; align-items: center; gap: 8px; }
+.auth-logo::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); display: block; }
+.auth-tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 24px; }
+.auth-tab { flex: 1; padding: 8px; text-align: center; cursor: pointer; font-size: 13px; color: var(--text2); border: none; background: none; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all .15s; }
+.auth-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+.f-label { font-size: 11px; font-weight: 500; color: var(--text2); letter-spacing: .06em; text-transform: uppercase; margin-bottom: 5px; display: block; }
+.f-input { width: 100%; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius); padding: 8px 11px; color: var(--text); font-family: var(--font); font-size: 13px; transition: border-color .15s; }
+.f-input:focus { outline: none; border-color: var(--accent); }
+.f-group { margin-bottom: 14px; }
+.f-select { width: 100%; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius); padding: 8px 11px; color: var(--text); font-size: 13px; }
+.f-select option { background: var(--bg3); }
+.f-textarea { width: 100%; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius); padding: 8px 11px; color: var(--text); font-size: 13px; resize: none; height: 80px; font-family: var(--font); }
+.f-textarea:focus { outline: none; border-color: var(--accent); }
+
+.btn-primary-it { background: var(--accent); color: #fff; border: none; border-radius: var(--radius); padding: 9px 16px; font-size: 13px; font-weight: 500; cursor: pointer; width: 100%; transition: background .15s; }
+.btn-primary-it:hover { background: var(--accent2); }
+.btn-sec { background: transparent; color: var(--text2); border: 1px solid var(--border); border-radius: var(--radius); padding: 6px 14px; font-size: 12px; cursor: pointer; transition: all .15s; }
+.btn-sec:hover { border-color: var(--text2); color: var(--text); }
+.btn-sm-it { background: var(--accent); color: #fff; border: none; border-radius: var(--radius); padding: 5px 12px; font-size: 12px; cursor: pointer; transition: background .15s; }
+.btn-sm-it:hover { background: var(--accent2); }
+.btn-danger { background: transparent; color: #ef4444; border: 1px solid #3a1a1a; border-radius: var(--radius); padding: 5px 12px; font-size: 12px; cursor: pointer; }
+
+.app-wrap { display: none; flex-direction: column; min-height: 100vh; }
+.topbar { background: var(--bg2); border-bottom: 1px solid var(--border); padding: 0 20px; display: flex; align-items: center; gap: 16px; height: 48px; }
+.topbar-logo { font-family: var(--mono); font-size: 14px; color: var(--accent); display: flex; align-items: center; gap: 6px; font-weight: 500; flex-shrink: 0; }
+.topbar-logo::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); display: block; }
+.topbar-nav { display: flex; gap: 2px; flex: 1; }
+.topbar-btn { background: none; border: none; color: var(--text2); font-size: 13px; padding: 6px 12px; border-radius: var(--radius); cursor: pointer; transition: all .15s; }
+.topbar-btn:hover, .topbar-btn.active { background: var(--bg3); color: var(--text); }
+.topbar-right { display: flex; align-items: center; gap: 10px; }
+.user-chip { font-size: 12px; color: var(--text2); background: var(--bg3); border: 1px solid var(--border); border-radius: 99px; padding: 3px 10px; font-family: var(--mono); white-space: nowrap; }
+.logout-btn { background: none; border: none; color: var(--text3); font-size: 12px; cursor: pointer; white-space: nowrap; }
+.logout-btn:hover { color: var(--text2); }
+
+.content { flex: 1; display: flex; overflow: hidden; }
+.sidebar { width: 200px; background: var(--bg2); border-right: 1px solid var(--border); padding: 16px 8px; flex-shrink: 0; overflow-y: auto; }
+.s-section { font-size: 10px; color: var(--text3); letter-spacing: .08em; text-transform: uppercase; padding: 8px 8px 4px; margin-top: 8px; font-family: var(--mono); }
+.s-link { display: block; width: 100%; text-align: left; padding: 6px 10px; border-radius: var(--radius); font-size: 12px; color: var(--text2); cursor: pointer; background: none; border: none; transition: all .15s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.s-link:hover, .s-link.active { background: var(--bg3); color: var(--text); }
+.main { flex: 1; padding: 20px; overflow: auto; }
+
+.page { display: none; }
+.page.active { display: block; }
+.page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+.page-title { font-size: 18px; font-weight: 600; }
+.breadcrumb-it { font-size: 11px; color: var(--text3); font-family: var(--mono); margin-bottom: 8px; }
+
+.stats-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 20px; }
+.stat-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; }
+.stat-label { font-size: 11px; color: var(--text2); margin-bottom: 4px; }
+.stat-val { font-size: 26px; font-weight: 600; font-family: var(--mono); }
+
+.proj-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px,1fr)); gap: 12px; }
+.proj-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 16px; cursor: pointer; transition: border-color .15s; }
+.proj-card:hover { border-color: var(--accent); }
+.proj-key { font-size: 10px; font-family: var(--mono); background: #1e3a5f; color: var(--accent); padding: 2px 7px; border-radius: 4px; display: inline-block; margin-bottom: 8px; }
+.proj-name { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+.proj-desc { font-size: 12px; color: var(--text2); margin-bottom: 12px; line-height: 1.5; min-height: 36px; }
+.proj-footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.proj-count { font-size: 11px; color: var(--text3); font-family: var(--mono); flex-shrink: 0; }
+.proj-actions { display: flex; gap: 4px; }
+.proj-add { border: 1px dashed var(--border); display: flex; align-items: center; justify-content: center; color: var(--text3); font-size: 13px; min-height: 140px; border-radius: 8px; cursor: pointer; transition: all .15s; }
+.proj-add:hover { border-color: var(--accent); color: var(--accent); }
+
+.board { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
+.col-it { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 12px; min-height: 400px; }
+.col-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.col-title-it { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: .06em; color: var(--text2); display: flex; align-items: center; gap: 6px; font-family: var(--mono); }
+.col-dot { width: 6px; height: 6px; border-radius: 50%; }
+.col-ct { font-size: 10px; color: var(--text3); background: var(--bg3); padding: 1px 6px; border-radius: 99px; font-family: var(--mono); }
+.ticket-card { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 12px; margin-bottom: 8px; cursor: pointer; transition: border-color .15s; }
+.ticket-card:hover { border-color: #3a3a3a; }
+.t-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.t-id { font-size: 10px; color: var(--text3); font-family: var(--mono); }
+.t-title { font-size: 13px; font-weight: 500; margin-bottom: 8px; line-height: 1.4; }
+.t-footer { display: flex; justify-content: space-between; align-items: center; }
+.badge-prio { font-size: 10px; font-weight: 500; padding: 2px 7px; border-radius: 4px; }
+.badge-alta { background: #3a1a1a; color: var(--alta); }
+.badge-media { background: #3a2a0a; color: var(--media); }
+.badge-baja { background: #0a2a1a; color: var(--baja); }
+.badge-estado { font-size: 10px; padding: 2px 7px; border-radius: 4px; font-weight: 500; }
+.badge-pendiente { background: #3a2a0a; color: var(--pending); }
+.badge-progreso { background: #1a2a3a; color: var(--progress); }
+.badge-completado { background: #0a2a1a; color: var(--done); }
+.av-it { width: 22px; height: 22px; border-radius: 50%; background: #1e3a5f; color: var(--accent); font-size: 9px; font-weight: 600; display: flex; align-items: center; justify-content: center; font-family: var(--mono); }
+.col-add-btn { width: 100%; padding: 7px; border: 1px dashed var(--border); border-radius: var(--radius); background: none; color: var(--text3); font-size: 12px; cursor: pointer; margin-top: 4px; transition: all .15s; }
+.col-add-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+.detail-layout { display: grid; grid-template-columns: 1fr 200px; gap: 16px; }
+.detail-title { font-size: 20px; font-weight: 600; margin-bottom: 10px; line-height: 1.4; }
+.detail-desc { font-size: 13px; color: var(--text2); line-height: 1.7; margin-bottom: 16px; }
+.detail-side-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 14px; }
+.detail-field { margin-bottom: 14px; }
+.detail-field-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 5px; font-family: var(--mono); }
+
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 1000; align-items: center; justify-content: center; }
+.modal-overlay.open { display: flex; }
+.modal-box { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 24px; width: 440px; max-width: 95vw; max-height: 90vh; overflow-y: auto; }
+.modal-title { font-size: 15px; font-weight: 600; margin-bottom: 20px; }
+.modal-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
+
+.empty-state { text-align: center; padding: 60px 20px; color: var(--text3); }
+.empty-state .icon { font-size: 32px; margin-bottom: 12px; }
+.empty-state p { font-size: 13px; }
+.error-msg { background: #3a1a1a; border: 1px solid #5a2020; color: #f87171; border-radius: var(--radius); padding: 8px 12px; font-size: 12px; margin-bottom: 12px; display: none; }
+.success-msg { background: #0a2a1a; border: 1px solid #1a5a30; color: #4ade80; border-radius: var(--radius); padding: 8px 12px; font-size: 12px; margin-bottom: 12px; display: none; }
+.divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+.miembros-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.miembro-chip { background: var(--bg3); border: 1px solid var(--border); border-radius: 99px; padding: 3px 10px; font-size: 11px; color: var(--text2); }
+</style>
+</head>
+<body>
+
+<!-- AUTH -->
+<div class="auth-wrap" id="authWrap">
+  <div class="auth-card">
+    <div class="auth-logo">IssueTrack</div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="switchTab('login')">Iniciar sesión</button>
+      <button class="auth-tab" onclick="switchTab('register')">Registrarse</button>
+    </div>
+    <div id="tabLogin">
+      <div id="loginError" class="error-msg"></div>
+      <div class="f-group"><label class="f-label">Correo electrónico</label><input class="f-input" id="loginEmail" type="email" placeholder="tu@email.com"></div>
+      <div class="f-group"><label class="f-label">Contraseña</label><input class="f-input" id="loginPassword" type="password" placeholder="••••••••"></div>
+      <button class="btn-primary-it" onclick="doLogin()">Entrar</button>
+    </div>
+    <div id="tabRegister" style="display:none">
+      <div id="registerError" class="error-msg"></div>
+      <div id="registerSuccess" class="success-msg"></div>
+      <div class="f-group"><label class="f-label">Nombre completo</label><input class="f-input" id="regName" placeholder="Jesus Gil"></div>
+      <div class="f-group"><label class="f-label">Correo electrónico</label><input class="f-input" id="regEmail" type="email" placeholder="tu@email.com"></div>
+      <div class="f-group"><label class="f-label">Contraseña</label><input class="f-input" id="regPassword" type="password" placeholder="Mínimo 6 caracteres"></div>
+      <button class="btn-primary-it" onclick="doRegister()">Crear cuenta</button>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="app-wrap" id="appWrap">
+  <div class="topbar">
+    <div class="topbar-logo">IssueTrack</div>
+    <div class="topbar-nav">
+      <button class="topbar-btn active" id="btnNavProyectos" onclick="navTo('proyectos')">Proyectos</button>
+      <button class="topbar-btn" id="btnNavTablero" onclick="navTo('tablero')">Tablero</button>
+    </div>
+    <div class="topbar-right">
+      <span class="user-chip" id="userChip">—</span>
+      <button class="logout-btn" onclick="doLogout()">Salir</button>
+    </div>
+  </div>
+  <div class="content">
+    <div class="sidebar">
+      <div class="s-section">General</div>
+      <button class="s-link active" id="sLinkProyectos" onclick="navTo('proyectos')">▦ Mis proyectos</button>
+      <div class="s-section" id="sProyectosTitle" style="display:none">Proyectos</div>
+      <div id="sProyectosList"></div>
+    </div>
+    <div class="main">
+
+      <!-- PROYECTOS -->
+      <div class="page active" id="pageProyectos">
+        <div class="stats-row">
+          <div class="stat-card"><div class="stat-label">Proyectos</div><div class="stat-val" id="statProyectos">0</div></div>
+          <div class="stat-card"><div class="stat-label">Tickets totales</div><div class="stat-val" id="statTickets">0</div></div>
+          <div class="stat-card"><div class="stat-label">En progreso</div><div class="stat-val" id="statProgreso">0</div></div>
+          <div class="stat-card"><div class="stat-label">Completados</div><div class="stat-val" id="statDone">0</div></div>
+        </div>
+        <div class="page-header">
+          <span class="page-title">Mis proyectos</span>
+          <button class="btn-sm-it" onclick="openModalProyecto()">+ Nuevo proyecto</button>
+        </div>
+        <div class="proj-grid" id="projGrid"></div>
+      </div>
+
+      <!-- TABLERO -->
+      <div class="page" id="pageTablero">
+        <div class="breadcrumb-it" id="boardBreadcrumb">Proyectos / —</div>
+        <div class="page-header">
+          <span class="page-title" id="boardTitle">Tablero</span>
+          <button class="btn-sm-it" onclick="openModalTicket()">+ Nuevo ticket</button>
+        </div>
+        <div class="board">
+          <div class="col-it">
+            <div class="col-head"><span class="col-title-it"><span class="col-dot" style="background:var(--pending)"></span>Pendiente</span><span class="col-ct" id="ctPendiente">0</span></div>
+            <div id="colPendiente"></div>
+            <button class="col-add-btn" onclick="openModalTicket()">+ Agregar</button>
+          </div>
+          <div class="col-it">
+            <div class="col-head"><span class="col-title-it"><span class="col-dot" style="background:var(--progress)"></span>En Progreso</span><span class="col-ct" id="ctProgreso">0</span></div>
+            <div id="colProgreso"></div>
+          </div>
+          <div class="col-it">
+            <div class="col-head"><span class="col-title-it"><span class="col-dot" style="background:var(--done)"></span>Completado</span><span class="col-ct" id="ctCompletado">0</span></div>
+            <div id="colCompletado"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DETALLE TICKET -->
+      <div class="page" id="pageDetalle">
+        <div class="breadcrumb-it" id="detalleBreadcrumb">—</div>
+        <div class="page-header">
+          <span style="font-family:var(--mono);font-size:13px;color:var(--text2)" id="detalleId">—</span>
+          <div style="display:flex;gap:8px">
+            <button class="btn-sec" onclick="editarTicketActual()">Editar</button>
+            <button class="btn-danger" onclick="eliminarTicketActual()">Eliminar</button>
+          </div>
+        </div>
+        <div class="detail-layout">
+          <div>
+            <div class="detail-title" id="detalleTitulo">—</div>
+            <div style="display:flex;gap:8px;margin-bottom:14px" id="detalleBadges"></div>
+            <div class="detail-desc" id="detalleDesc">—</div>
+            <hr class="divider">
+            <div style="font-size:11px;font-weight:500;color:var(--text2);margin-bottom:10px;text-transform:uppercase;letter-spacing:.06em;font-family:var(--mono)">Cambiar estado</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap" id="estadoBtns"></div>
+          </div>
+          <div>
+            <div class="detail-side-card">
+              <div class="detail-field"><div class="detail-field-label">Estado</div><div id="detalleEstado">—</div></div>
+              <div class="detail-field"><div class="detail-field-label">Prioridad</div><div id="detallePrioridad">—</div></div>
+              <div class="detail-field"><div class="detail-field-label">Asignado a</div><div id="detalleAsignado" style="font-size:13px">—</div></div>
+              <div class="detail-field"><div class="detail-field-label">Proyecto</div><div id="detalleProyecto" style="font-size:13px">—</div></div>
+              <div class="detail-field"><div class="detail-field-label">Creado</div><div id="detalleCreado" style="font-size:12px;color:var(--text2)">—</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PROYECTO -->
+<div class="modal-overlay" id="modalProyecto">
+  <div class="modal-box">
+    <div class="modal-title" id="modalProyectoTitle">Nuevo proyecto</div>
+    <div id="modalProyectoError" class="error-msg"></div>
+    <div class="f-group"><label class="f-label">Nombre *</label><input class="f-input" id="mpNombre" placeholder="Ej: ShopBolivia"></div>
+    <div class="f-group"><label class="f-label">Descripción</label><textarea class="f-textarea" id="mpDesc" placeholder="Describe el proyecto..."></textarea></div>
+    <div class="modal-footer">
+      <button class="btn-sec" onclick="closeModal('modalProyecto')">Cancelar</button>
+      <button class="btn-sm-it" onclick="guardarProyecto()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL TICKET -->
+<div class="modal-overlay" id="modalTicket">
+  <div class="modal-box">
+    <div class="modal-title" id="modalTicketTitle">Nuevo ticket</div>
+    <div id="modalTicketError" class="error-msg"></div>
+    <div class="f-group"><label class="f-label">Título *</label><input class="f-input" id="mtTitulo" placeholder="Ej: Implementar login JWT"></div>
+    <div class="f-group"><label class="f-label">Descripción</label><textarea class="f-textarea" id="mtDesc" placeholder="Detalla el ticket..."></textarea></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="f-group"><label class="f-label">Prioridad</label>
+        <select class="f-select" id="mtPrioridad">
+          <option value="Alta">Alta</option>
+          <option value="Media" selected>Media</option>
+          <option value="Baja">Baja</option>
+        </select>
+      </div>
+      <div class="f-group"><label class="f-label">Asignado a</label>
+        <select class="f-select" id="mtAsignado"><option value="">Sin asignar</option></select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-sec" onclick="closeModal('modalTicket')">Cancelar</button>
+      <button class="btn-sm-it" onclick="guardarTicket()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL MIEMBRO -->
+<div class="modal-overlay" id="modalMiembro">
+  <div class="modal-box" style="width:380px">
+    <div class="modal-title">Agregar miembro al proyecto</div>
+    <div id="modalMiembroError" class="error-msg"></div>
+    <div class="f-group">
+      <label class="f-label">ID del usuario *</label>
+      <input class="f-input" id="mmUsuarioId" type="number" min="1" placeholder="Ej: 2">
+      <div style="font-size:11px;color:var(--text3);margin-top:5px">Ingresa el ID numérico del usuario registrado en el sistema.</div>
+    </div>
+    <div id="miembrosActuales" style="margin-top:4px"></div>
+    <div class="modal-footer">
+      <button class="btn-sec" onclick="closeModal('modalMiembro')">Cancelar</button>
+      <button class="btn-sm-it" onclick="guardarMiembro()">Agregar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = 'http://localhost:3000';
+let token       = localStorage.getItem('token') || null;
+let currentUser = JSON.parse(localStorage.getItem('user') || 'null');
+let proyectos       = [];
+let currentProyecto = null;
+let currentTickets  = [];
+let currentTicket   = null;
+let editingProyectoId = null;
+let editingTicketId   = null;
+let miembroProyectoId = null;
+
+// ── INIT
+window.onload = () => { if (token && currentUser) showApp(); };
+
+// ── AUTH
+function switchTab(tab) {
+  document.querySelectorAll('.auth-tab').forEach((t,i) => t.classList.toggle('active', (tab==='login'&&i===0)||(tab==='register'&&i===1)));
+  document.getElementById('tabLogin').style.display    = tab==='login'    ? 'block':'none';
+  document.getElementById('tabRegister').style.display = tab==='register' ? 'block':'none';
+}
+
+async function doLogin() {
+  const email    = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const err      = document.getElementById('loginError');
+  err.style.display = 'none';
+  try {
+    const res  = await fetch(`${API}/auth/login`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({email,password}) });
+    const data = await res.json();
+    if (!res.ok) { err.textContent = data.message || data.error || 'Error al iniciar sesión'; err.style.display='block'; return; }
+    token = data.token;
+    localStorage.setItem('token', token);
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    currentUser = { id: payload.id, email };
+    localStorage.setItem('user', JSON.stringify(currentUser));
+    showApp();
+  } catch(e) { err.textContent = 'Error de conexión con la API'; err.style.display='block'; }
+}
+
+async function doRegister() {
+  const nombreCompleto = document.getElementById('regName').value.trim();
+  const email          = document.getElementById('regEmail').value.trim();
+  const password       = document.getElementById('regPassword').value;
+  const err = document.getElementById('registerError');
+  const suc = document.getElementById('registerSuccess');
+  err.style.display = suc.style.display = 'none';
+  try {
+    const res  = await fetch(`${API}/auth/register`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({nombreCompleto,email,password}) });
+    const data = await res.json();
+    if (!res.ok) { err.textContent = data.message || data.error; err.style.display='block'; return; }
+    suc.textContent = '¡Cuenta creada! Ahora inicia sesión.';
+    suc.style.display = 'block';
+    setTimeout(() => switchTab('login'), 1500);
+  } catch(e) { err.textContent = 'Error de conexión'; err.style.display='block'; }
+}
+
+function doLogout() {
+  token = null; currentUser = null;
+  localStorage.removeItem('token'); localStorage.removeItem('user');
+  document.getElementById('authWrap').style.display = 'flex';
+  document.getElementById('appWrap').style.display  = 'none';
+}
+
+// ── APP
+async function showApp() {
+  document.getElementById('authWrap').style.display = 'none';
+  document.getElementById('appWrap').style.display  = 'flex';
+  try {
+    const res  = await apiFetch('/auth/me');
+    const data = await res.json();
+    if (data.usuario) {
+      currentUser = { ...currentUser, ...data.usuario };
+      localStorage.setItem('user', JSON.stringify(currentUser));
+      document.getElementById('userChip').textContent = currentUser.nombreCompleto || currentUser.email;
+    }
+  } catch(e) {}
+  await loadProyectos();
+}
+
+function apiFetch(path, opts={}) {
+  return fetch(`${API}${path}`, {
+    ...opts,
+    headers: { 'Content-Type':'application/json', 'Authorization':`Bearer ${token}`, ...(opts.headers||{}) }
+  });
+}
+
+// ── NAV
+function navTo(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.topbar-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.s-link').forEach(b => b.classList.remove('active'));
+  if (page === 'proyectos') {
+    document.getElementById('pageProyectos').classList.add('active');
+    document.getElementById('btnNavProyectos').classList.add('active');
+    document.getElementById('sLinkProyectos').classList.add('active');
+  } else if (page === 'tablero') {
+    document.getElementById('pageTablero').classList.add('active');
+    document.getElementById('btnNavTablero').classList.add('active');
+    const el = document.getElementById(`sLink_${currentProyecto?.id}`);
+    if (el) el.classList.add('active');
+  } else if (page === 'detalle') {
+    document.getElementById('pageDetalle').classList.add('active');
+    document.getElementById('btnNavTablero').classList.add('active');
+  }
+}
+
+// ── PROYECTOS
+async function loadProyectos() {
+  try {
+    const res = await apiFetch('/proyectos');
+    proyectos = await res.json();
+    if (!Array.isArray(proyectos)) proyectos = [];
+  } catch(e) { proyectos = []; }
+  renderProyectos();
+  renderSidebarProyectos();
+  // Stats
+  let totalTickets=0, totalProgreso=0, totalDone=0;
+  for (const p of proyectos) {
+    try {
+      const r = await apiFetch(`/proyectos/${p.id}/tickets`);
+      const t = await r.json();
+      if (Array.isArray(t)) {
+        totalTickets  += t.length;
+        totalProgreso += t.filter(x=>x.estado==='En Progreso').length;
+        totalDone     += t.filter(x=>x.estado==='Completado').length;
+      }
+    } catch(e) {}
+  }
+  document.getElementById('statProyectos').textContent = proyectos.length;
+  document.getElementById('statTickets').textContent   = totalTickets;
+  document.getElementById('statProgreso').textContent  = totalProgreso;
+  document.getElementById('statDone').textContent      = totalDone;
+}
+
+function renderProyectos() {
+  const grid = document.getElementById('projGrid');
+  if (!proyectos.length) {
+    grid.innerHTML = `<div class="proj-add" onclick="openModalProyecto()">+ Crear primer proyecto</div>`;
+    return;
+  }
+  grid.innerHTML = proyectos.map(p => `
+    <div class="proj-card" onclick="openTablero(${p.id})">
+      <span class="proj-key">${p.nombre.substring(0,4).toUpperCase()}</span>
+      <div class="proj-name">${esc(p.nombre)}</div>
+      <div class="proj-desc">${esc(p.descripcion || 'Sin descripción')}</div>
+      <div class="proj-footer">
+        <span class="proj-count">${(p.miembros||[]).length} miembro(s)</span>
+        <div class="proj-actions">
+          <button class="btn-sec" style="padding:3px 9px;font-size:11px" onclick="event.stopPropagation();editarProyecto(${p.id})">Editar</button>
+          <button class="btn-sec" style="padding:3px 9px;font-size:11px" onclick="event.stopPropagation();openModalMiembro(${p.id})">+ Miembro</button>
+        </div>
+      </div>
+    </div>
+  `).join('') + `<div class="proj-add" onclick="openModalProyecto()">+ Nuevo proyecto</div>`;
+}
+
+function renderSidebarProyectos() {
+  const list  = document.getElementById('sProyectosList');
+  const title = document.getElementById('sProyectosTitle');
+  if (!proyectos.length) { list.innerHTML=''; title.style.display='none'; return; }
+  title.style.display = 'block';
+  list.innerHTML = proyectos.map(p => `
+    <button class="s-link" id="sLink_${p.id}" onclick="openTablero(${p.id})">${esc(p.nombre)}</button>
+  `).join('');
+}
+
+async function openTablero(proyectoId) {
+  currentProyecto = proyectos.find(p => p.id === proyectoId);
+  document.getElementById('boardTitle').textContent      = currentProyecto.nombre;
+  document.getElementById('boardBreadcrumb').textContent = `Proyectos / ${currentProyecto.nombre}`;
+  navTo('tablero');
+  await loadTickets();
+}
+
+// ── TICKETS
+async function loadTickets() {
+  try {
+    const res      = await apiFetch(`/proyectos/${currentProyecto.id}/tickets`);
+    currentTickets = await res.json();
+    if (!Array.isArray(currentTickets)) currentTickets = [];
+  } catch(e) { currentTickets = []; }
+  renderBoard();
+}
+
+function renderBoard() {
+  const pending  = currentTickets.filter(t => t.estado === 'Pendiente');
+  const progress = currentTickets.filter(t => t.estado === 'En Progreso');
+  const done     = currentTickets.filter(t => t.estado === 'Completado');
+  document.getElementById('ctPendiente').textContent  = pending.length;
+  document.getElementById('ctProgreso').textContent   = progress.length;
+  document.getElementById('ctCompletado').textContent = done.length;
+  document.getElementById('colPendiente').innerHTML   = pending.length  ? pending.map(ticketCardHTML).join('')  : `<div style="text-align:center;padding:20px;color:var(--text3);font-size:12px">Sin tickets</div>`;
+  document.getElementById('colProgreso').innerHTML    = progress.length ? progress.map(ticketCardHTML).join('') : `<div style="text-align:center;padding:20px;color:var(--text3);font-size:12px">Sin tickets</div>`;
+  document.getElementById('colCompletado').innerHTML  = done.length     ? done.map(ticketCardHTML).join('')     : `<div style="text-align:center;padding:20px;color:var(--text3);font-size:12px">Sin tickets</div>`;
+}
+
+function ticketCardHTML(t) {
+  const prioClass = { Alta:'badge-alta', Media:'badge-media', Baja:'badge-baja' }[t.prioridad] || 'badge-media';
+  const initials = t.asignado ? t.asignado.nombreCompleto.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase() : null;
+  const av = initials ? `<div class="av-it">${initials}</div>` : `<span style="font-size:10px;color:var(--text3)">—</span>`;
+  return `<div class="ticket-card" onclick="openDetalle(${t.id})">
+    <div class="t-top"><span class="t-id">#${t.id}</span><span class="badge-prio ${prioClass}">${t.prioridad}</span></div>
+    <div class="t-title">${esc(t.titulo)}</div>
+    <div class="t-footer"><span style="font-size:11px;color:var(--text3)">${t.asignado ? esc(t.asignado.nombreCompleto) : 'Sin asignar'}</span>${av}</div>
+  </div>`;
+}
+
+function openDetalle(ticketId) {
+  currentTicket = currentTickets.find(t => t.id === ticketId);
+  const t = currentTicket;
+  document.getElementById('detalleBreadcrumb').textContent = `Proyectos / ${currentProyecto.nombre} / #${t.id}`;
+  document.getElementById('detalleId').textContent     = `#${t.id}`;
+  document.getElementById('detalleTitulo').textContent  = t.titulo;
+  document.getElementById('detalleDesc').textContent    = t.descripcion || 'Sin descripción.';
+  const prioClass = { Alta:'badge-alta', Media:'badge-media', Baja:'badge-baja' }[t.prioridad] || 'badge-media';
+  const estClass  = { 'Pendiente':'badge-pendiente', 'En Progreso':'badge-progreso', 'Completado':'badge-completado' }[t.estado] || '';
+  document.getElementById('detalleBadges').innerHTML    = `<span class="badge-prio ${prioClass}">${t.prioridad}</span><span class="badge-estado ${estClass}">${t.estado}</span>`;
+  document.getElementById('detalleEstado').innerHTML    = `<span class="badge-estado ${estClass}">${t.estado}</span>`;
+  document.getElementById('detallePrioridad').innerHTML = `<span class="badge-prio ${prioClass}">${t.prioridad}</span>`;
+  document.getElementById('detalleAsignado').textContent = t.asignado ? t.asignado.nombreCompleto : 'Sin asignar';
+  document.getElementById('detalleProyecto').textContent = currentProyecto.nombre;
+  document.getElementById('detalleCreado').textContent   = new Date(t.createdAt).toLocaleDateString('es-BO');
+  const TRANS = { 'Pendiente':['En Progreso'], 'En Progreso':['Pendiente','Completado'], 'Completado':[] };
+  const btns  = TRANS[t.estado] || [];
+  document.getElementById('estadoBtns').innerHTML = btns.length
+    ? btns.map(e => `<button class="btn-sm-it" onclick="cambiarEstado('${e}')">${e}</button>`).join('')
+    : `<span style="font-size:12px;color:var(--text3)">Ticket finalizado — no hay más transiciones</span>`;
+  navTo('detalle');
+}
+
+async function cambiarEstado(nuevoEstado) {
+  const res  = await apiFetch(`/proyectos/${currentProyecto.id}/tickets/${currentTicket.id}/estado`, {
+    method: 'PATCH', body: JSON.stringify({ estado: nuevoEstado })
+  });
+  const data = await res.json();
+  if (!res.ok) { alert(data.message || data.error); return; }
+  await loadTickets();
+  openDetalle(currentTicket.id);
+}
+
+// ── MODAL PROYECTO
+function openModalProyecto() {
+  editingProyectoId = null;
+  document.getElementById('modalProyectoTitle').textContent = 'Nuevo proyecto';
+  document.getElementById('mpNombre').value = '';
+  document.getElementById('mpDesc').value   = '';
+  document.getElementById('modalProyectoError').style.display = 'none';
+  openModal('modalProyecto');
+}
+
+function editarProyecto(id) {
+  const p = proyectos.find(x => x.id === id);
+  if (!p) return;
+  editingProyectoId = id;
+  document.getElementById('modalProyectoTitle').textContent = 'Editar proyecto';
+  document.getElementById('mpNombre').value = p.nombre;
+  document.getElementById('mpDesc').value   = p.descripcion || '';
+  document.getElementById('modalProyectoError').style.display = 'none';
+  openModal('modalProyecto');
+}
+
+async function guardarProyecto() {
+  const nombre      = document.getElementById('mpNombre').value.trim();
+  const descripcion = document.getElementById('mpDesc').value.trim();
+  const err         = document.getElementById('modalProyectoError');
+  err.style.display = 'none';
+  if (!nombre) { err.textContent = 'El nombre es requerido'; err.style.display='block'; return; }
+  try {
+    const method = editingProyectoId ? 'PUT' : 'POST';
+    const path   = editingProyectoId ? `/proyectos/${editingProyectoId}` : '/proyectos';
+    const res    = await apiFetch(path, { method, body: JSON.stringify({nombre,descripcion}) });
+    const data   = await res.json();
+    if (!res.ok) { err.textContent = data.message || data.error || 'Error al guardar'; err.style.display='block'; return; }
+    closeModal('modalProyecto');
+    await loadProyectos();
+  } catch(e) { err.textContent = 'Error de conexión'; err.style.display='block'; }
+}
+
+// ── MODAL MIEMBRO
+function openModalMiembro(proyectoId) {
+  miembroProyectoId = proyectoId;
+  const p = proyectos.find(x => x.id === proyectoId);
+  document.getElementById('mmUsuarioId').value = '';
+  document.getElementById('modalMiembroError').style.display = 'none';
+  // Mostrar miembros actuales
+  const miembros = p?.miembros || [];
+  document.getElementById('miembrosActuales').innerHTML = miembros.length
+    ? `<div style="font-size:11px;color:var(--text3);margin-bottom:6px">Miembros actuales:</div>
+       <div class="miembros-list">${miembros.map(m=>`<span class="miembro-chip">${esc(m.nombreCompleto)} (ID:${m.id})</span>`).join('')}</div>`
+    : '';
+  openModal('modalMiembro');
+}
+
+async function guardarMiembro() {
+  const usuarioId = parseInt(document.getElementById('mmUsuarioId').value);
+  const err = document.getElementById('modalMiembroError');
+  err.style.display = 'none';
+  if (!usuarioId || usuarioId < 1) { err.textContent = 'Ingresa un ID de usuario válido'; err.style.display='block'; return; }
+  try {
+    const res  = await apiFetch(`/proyectos/${miembroProyectoId}/miembros`, {
+      method: 'POST', body: JSON.stringify({ usuarioId })
+    });
+    const data = await res.json();
+    if (!res.ok) { err.textContent = data.message || data.error || 'Error al agregar'; err.style.display='block'; return; }
+    closeModal('modalMiembro');
+    await loadProyectos();
+  } catch(e) { err.textContent = 'Error de conexión'; err.style.display='block'; }
+}
+
+// ── MODAL TICKET
+async function openModalTicket() {
+  editingTicketId = null;
+  document.getElementById('modalTicketTitle').textContent = 'Nuevo ticket';
+  document.getElementById('mtTitulo').value    = '';
+  document.getElementById('mtDesc').value      = '';
+  document.getElementById('mtPrioridad').value = 'Media';
+  document.getElementById('modalTicketError').style.display = 'none';
+  await cargarMiembrosEnSelect(null);
+  openModal('modalTicket');
+}
+
+function editarTicketActual() {
+  const t = currentTicket;
+  editingTicketId = t.id;
+  document.getElementById('modalTicketTitle').textContent = 'Editar ticket';
+  document.getElementById('mtTitulo').value    = t.titulo;
+  document.getElementById('mtDesc').value      = t.descripcion || '';
+  document.getElementById('mtPrioridad').value = t.prioridad;
+  document.getElementById('modalTicketError').style.display = 'none';
+  cargarMiembrosEnSelect(t.asignadoId);
+  openModal('modalTicket');
+}
+
+async function cargarMiembrosEnSelect(selectedId) {
+  const select = document.getElementById('mtAsignado');
+  select.innerHTML = '<option value="">Sin asignar</option>';
+  const miembros = currentProyecto?.miembros || [];
+  miembros.forEach(m => {
+    const opt       = document.createElement('option');
+    opt.value       = m.id;
+    opt.textContent = m.nombreCompleto;
+    if (selectedId && m.id === selectedId) opt.selected = true;
+    select.appendChild(opt);
+  });
+}
+
+async function guardarTicket() {
+  const titulo      = document.getElementById('mtTitulo').value.trim();
+  const descripcion = document.getElementById('mtDesc').value.trim();
+  const prioridad   = document.getElementById('mtPrioridad').value;
+  const asignadoId  = document.getElementById('mtAsignado').value;
+  const err         = document.getElementById('modalTicketError');
+  err.style.display = 'none';
+  if (!titulo) { err.textContent = 'El título es requerido'; err.style.display='block'; return; }
+  const body = { titulo, descripcion, prioridad, asignadoId: asignadoId ? parseInt(asignadoId) : null };
+  try {
+    const method = editingTicketId ? 'PUT' : 'POST';
+    const path   = editingTicketId
+      ? `/proyectos/${currentProyecto.id}/tickets/${editingTicketId}`
+      : `/proyectos/${currentProyecto.id}/tickets`;
+    const res  = await apiFetch(path, { method, body: JSON.stringify(body) });
+    const data = await res.json();
+    if (!res.ok) { err.textContent = data.message || data.error || 'Error al guardar'; err.style.display='block'; return; }
+    closeModal('modalTicket');
+    await loadTickets();
+    if (editingTicketId) openDetalle(editingTicketId);
+  } catch(e) { err.textContent = 'Error de conexión'; err.style.display='block'; }
+}
+
+async function eliminarTicketActual() {
+  if (!confirm(`¿Eliminar "${currentTicket.titulo}"?`)) return;
+  await apiFetch(`/proyectos/${currentProyecto.id}/tickets/${currentTicket.id}`, { method:'DELETE' });
+  await loadTickets();
+  navTo('tablero');
+}
+
+// ── HELPERS
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function esc(str) { return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+});
+</script>
+</body>
+</html>
