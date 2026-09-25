@@ -1,5 +1,23 @@
-node_modules/
+﻿node_modules/
 .env
 .env.*
 database.sqlite
 *.log
+
+# laptop - repos anidados/NO trackear
+3erPracticoWebIIBackend/
+BACKEND - quiniela/
+Backend/
+Cinemax-Backend/
+Nueva carpeta/
+Nueva carpeta - copia/
+OnlyFlans/
+Quiniela-Backend/
+Quiniela-Frontend/
+cinemax-frontend/
+currency-agent/
+onlyflans-frontend/
+Quiniela-Frontend.zip
+Quiniela-Backend.zip
+*.__bak
+respaldo-untracked-*/
